@@ -1,0 +1,191 @@
+{
+  "nodes": [
+    {
+      "parameters": {
+        "path": "getAlerts",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "e70d2264-bac6-4ed2-af26-01aaf0b8b32c",
+      "name": "Webhook",
+      "webhookId": "8aefeeda-90a6-4883-845f-86f5700ed995"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.query.message }}",
+        "hasOutputParser": true,
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        352,
+        0
+      ],
+      "id": "daf3efae-456e-4b06-b240-690f618ee2c7",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "description": "\nUse this tool to query the local SQLite financial database. Pass the exact SQL string as the \"query\" parameter.\n\nThe database schema contains three tables:\n\nusers: id (PK), name, tier, wealth_score, net_worth, persona (user preferences, financial goals, persona for personaliozed interacrtions)\n\ntransactions: id (PK), user_id (FK -> users.id), date (YYYY-MM-DD), description, category (food, utilities, investment, transport, income, other), amount, type (inflow or outflow)\n\nproducts: id (PK), title, description, stat_label, stat_value, tag, icon\n\nAlways use this schema to formulate your SQL queries. \n\nYou are an expert financial advisor. Your task is to analyze the user's financial profile and existing alerts to generate a curated, prioritized list of exactly 5 actionable alerts.\n\nTask Instructions:\n\nAnalyze: Evaluate the user's persona and user transactions history\n\nRefresh: Review existing alerts provided in the input and filter them for relevance.\n\nPrioritize: Select/generate up to 5 high-impact alerts categorized as follows:\n\nSavings Opportunity: Identify idle cash or areas to optimize yield.\n\nBills/EMIs: Upcoming fixed obligations.\n\nSubscriptions: Recurring transactions detected at least twice with a uniform interval.\n\nPersonal Goals: Progress updates or nudges related to the user's defined financial targets in the user persona.\n\nResponse Requirements:\n\nConcise: Use simple, very short, direct language. Avoid filler.\n\nFormatting: Present the alerts as a clean, bulleted list.\n\nExamples:\n\n\"Upcoming: Your $145.20 utility payment is due in 3 days.\"\n\n\"Alert: Cash reserves have dropped below your $1,000.00 threshold.\"\n\nConstraint: Do not exceed 5 alerts. If fewer than 5 high-priority alerts exist, only return the relevant ones.",
+        "workflowId": {
+          "__rl": true,
+          "value": "PXQlq9CedsFAkrFP",
+          "mode": "list",
+          "cachedResultUrl": "/workflow/PXQlq9CedsFAkrFP",
+          "cachedResultName": "Tool - SQLite Query"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "query": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('query', ``, 'string') }}"
+          },
+          "matchingColumns": [
+            "query"
+          ],
+          "schema": [
+            {
+              "id": "query",
+              "displayName": "query",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
+      "typeVersion": 2.2,
+      "position": [
+        512,
+        224
+      ],
+      "id": "07496971-43fc-409c-96f1-e260b3883418",
+      "name": "Call 'Tool - SQLite Query'"
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "={{ $json.query.sessionId }}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.4,
+      "position": [
+        352,
+        224
+      ],
+      "id": "a72f16e4-0e6e-46bb-b961-777bbf4d84c6",
+      "name": "Simple Memory"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "@azure-openai-eus2/gpt-5-mini",
+          "mode": "list",
+          "cachedResultName": "@azure-openai-eus2/gpt-5-mini"
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        144,
+        224
+      ],
+      "id": "4b60567e-6a7c-4f28-a9c6-0211e4ccf6ab",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": "PQnHyYniItzpG7Dz",
+          "name": "OpenAI account"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        688,
+        224
+      ],
+      "id": "fba4c296-5adb-47cd-beed-3bcf3f22dec7",
+      "name": "Structured Output Parser"
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Call 'Tool - SQLite Query'": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Simple Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "c54a68db51fede5f55cdaa804086406d67c34e667dde67a4ecea1896080d985e"
+  }
+}
